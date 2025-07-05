@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรับสินค้า Station</title>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-section, .station-select, .receive-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ระบบรับสินค้า Station</h1>
+        <a href="index.html" style="color: #007bff;">← กลับหน้าหลัก</a>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="login-section">
+            <h3>เข้าสู่ระบบ</h3>
+            <input type="text" id="username" placeholder="ชื่อผู้ใช้">
+            <input type="password" id="password" placeholder="รหัสผ่าน">
+            <button onclick="login()">เข้าสู่ระบบ</button>
+        </div>
+
+        <!-- Station Selection -->
+        <div id="stationSelect" class="station-select hidden">
+            <h3>เลือกคลังสินค้า</h3>
+            <select id="stationList">
+                <option value="">-- เลือกคลังสินค้า --</option>
+            </select>
+            <button onclick="addNewStation()">เพิ่มคลังใหม่</button>
+            <button onclick="selectStation()">เลือกคลัง</button>
+        </div>
+
+        <!-- Add New Station -->
+        <div id="addStationSection" class="hidden">
+            <h4>เพิ่มคลังสินค้าใหม่</h4>
+            <input type="text" id="newStationName" placeholder="ชื่อคลังสินค้า">
+            <button onclick="saveNewStation()">บันทึก</button>
+            <button onclick="cancelAddStation()">ยกเลิก</button>
+        </div>
+
+        <!-- Receive Package Section -->
+        <div id="receiveSection" class="receive-section hidden">
+            <h3>รับสินค้า - <span id="selectedStationName"></span></h3>
+            <input type="text" id="packageInput" placeholder="กรอกรหัสติดตามพัสดุ หรือ QR Code">
+            <button onclick="receivePackage()">รับสินค้า</button>
+            <button onclick="scanQR()">สแกน QR Code</button>
+            <div id="receiveResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_URL = 'YOUR_GOOGLE_SHEETS_WEB_APP_URL';
+        let currentUser = null;
+        let selectedStation = null;
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                alert('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+                return;
+            }
+
+            // Simple authentication (ในการใช้งานจริงควรมีการตรวจสอบที่ปลอดภัยกว่า)
+            if (username && password) {
+                currentUser = username;
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('stationSelect').classList.remove('hidden');
+                loadStations();
+            }
+        }
+
+        async function loadStations() {
+            try {
+                const response = await fetch(`${SHEET_URL}?action=getStations`);
+                const data = await response.json();
+                
+                const stationList = document.getElementById('stationList');
+                stationList.innerHTML = '<option value="">-- เลือกคลังสินค้า --</option>';
+                
+                data.stations.forEach(station => {
+                    const option = document.createElement('option');
+                    option.value = station.id;
+                    option.textContent = station.name;
+                    stationList.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading stations:', error);
+            }
+        }
+
+        function addNewStation() {
+            document.getElementById('addStationSection').classList.remove('hidden');
+        }
+
+        function cancelAddStation() {
+            document.getElementById('addStationSection').classList.add('hidden');
+            document.getElementById('newStationName').value = '';
+        }
+
+        async function saveNewStation() {
+            const stationName = document.getElementById('newStationName').value;
+            if (!stationName) {
+                alert('กรุณากรอกชื่อคลังสินค้า');
+                return;
+            }
+
+            try {
+                const response = await fetch(SHEET_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'addStation',
+                        stationName: stationName
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('เพิ่มคลังสินค้าเรียบร้อย');
+                    cancelAddStation();
+                    loadStations();
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเพิ่มคลัง');
+            }
+        }
+
+        function selectStation() {
+            const stationId = document.getElementById('stationList').value;
+            const stationName = document.getElementById('stationList').options[document.getElementById('stationList').selectedIndex].text;
+            
+            if (!stationId) {
+                alert('กรุณาเลือกคลังสินค้า');
+                return;
+            }
+
+            selectedStation = stationId;
+            document.getElementById('selectedStationName').textContent = stationName;
+            document.getElementById('stationSelect').classList.add('hidden');
+            document.getElementById('receiveSection').classList.remove('hidden');
+        }
+
+        async function receivePackage() {
+            const packageId = document.getElementById('packageInput').value;
+            if (!packageId) {
+                alert('กรุณากรอกรหัสติดตามพัสดุ');
+                return;
+            }
+
+            try {
+                const response = await fetch(SHEET_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'receivePackage',
+                        packageId: packageId,
+                        stationId: selectedStation,
+                        timestamp: new Date().toLocaleString('th-TH'),
+                        user: currentUser
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('receiveResult').innerHTML = 
+                        `<div class="success">รับสินค้าเรียบร้อย - ${packageId}</div>`;
+                    document.getElementById('packageInput').value = '';
+                } else {
+                    alert('เกิดข้อผิดพลาดในการรับสินค้า');
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            }
+        }
+
+        function scanQR() {
+            alert('เปิดกล้องเพื่อสแกน QR Code (ต้องติดตั้ง QR Scanner Library)');
+        }
+    </script>
+</body>
+</html>

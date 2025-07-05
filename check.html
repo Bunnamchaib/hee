@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตรวจสอบสถานะพัสดุ</title>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .search-box {
+            margin: 20px 0;
+        }
+        .search-box input {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .search-box button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: none;
+        }
+        .status-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ตรวจสอบสถานะพัสดุ</h1>
+        <a href="index.html" style="color: #007bff;">← กลับหน้าหลัก</a>
+        
+        <div class="search-box">
+            <input type="text" id="packageId" placeholder="กรอกรหัสติดตามพัสดุ หรือ QR Code">
+            <button onclick="searchPackage()">ค้นหา</button>
+            <button onclick="startQRScan()">สแกน QR Code</button>
+        </div>
+
+        <div id="result" class="result">
+            <h3>ผลการค้นหา</h3>
+            <div id="packageInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_URL = 'YOUR_GOOGLE_SHEETS_WEB_APP_URL';
+
+        async function searchPackage() {
+            const packageId = document.getElementById('packageId').value;
+            if (!packageId) {
+                alert('กรุณากรอกรหัสติดตามพัสดุ');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SHEET_URL}?action=search&packageId=${packageId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResult(data.package);
+                } else {
+                    alert('ไม่พบข้อมูลพัสดุ');
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการค้นหา');
+            }
+        }
+
+        function displayResult(packageData) {
+            const resultDiv = document.getElementById('result');
+            const infoDiv = document.getElementById('packageInfo');
+            
+            infoDiv.innerHTML = `
+                <div class="status-card">
+                    <h4>รหัสพัสดุ: ${packageData.id}</h4>
+                    <p><strong>สถานีปัจจุบัน:</strong> ${packageData.currentStation}</p>
+                    <p><strong>เวลาล่าสุด:</strong> ${packageData.timestamp}</p>
+                    <p><strong>สถานะ:</strong> ${packageData.status}</p>
+                </div>
+                <div class="status-card">
+                    <h4>ประวัติการเดินทาง</h4>
+                    <div>${packageData.history}</div>
+                </div>
+            `;
+            
+            resultDiv.style.display = 'block';
+        }
+
+        function startQRScan() {
+            // ใช้ HTML5 QR Code Scanner
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                // เปิดกล้องสำหรับสแกน QR Code
+                alert('เปิดกล้องเพื่อสแกน QR Code (ต้องติดตั้ง QR Scanner Library)');
+            } else {
+                alert('เบราว์เซอร์ไม่รองรับการเปิดกล้อง');
+            }
+        }
+    </script>
+</body>
+</html>
