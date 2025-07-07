@@ -100,7 +100,7 @@
     </div>
 
     <script>
-        const SHEET_URL = 'YOUR_GOOGLE_SHEETS_WEB_APP_URL';
+        const SHEET_URL = 'https://script.google.com/macros/s/AKfycbx3M2HxTzDWNCAxk5L8mYNlO740XOcSPHMAiwVtijv1NyfYaIgabtxBZ6XWwjRAsojO5w/exec';
         let currentUser = null;
         let selectedStation = null;
 
@@ -124,7 +124,7 @@
 
         async function loadStations() {
             try {
-                const response = await fetch(`${SHEET_URL}?action=getStations`);
+                const response = await fetch(`${https://docs.google.com/spreadsheets/d/1cgySD5w0W36ZJTLOsybl5L4tDUweQyNjSGFwC1wTqTg/edit?gid=1684711135#gid=1684711135}?action=getStations`);
                 const data = await response.json();
                 
                 const stationList = document.getElementById('stationList');
@@ -158,7 +158,7 @@
             }
 
             try {
-                const response = await fetch(SHEET_URL, {
+                const response = await fetch(https://docs.google.com/spreadsheets/d/1cgySD5w0W36ZJTLOsybl5L4tDUweQyNjSGFwC1wTqTg/edit?gid=1684711135#gid=1684711135, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -203,7 +203,7 @@
             }
 
             try {
-                const response = await fetch(SHEET_URL, {
+                const response = await fetch(https://docs.google.com/spreadsheets/d/1cgySD5w0W36ZJTLOsybl5L4tDUweQyNjSGFwC1wTqTg/edit?gid=1684711135#gid=1684711135, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
